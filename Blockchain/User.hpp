@@ -23,11 +23,7 @@
 class User{
 public:
     const bool RANDOM_PRIVATE_KEY = true;
-    const int ADDRESS_LENGTH = 16;
-    
-    int waitingTime;
-
-    /*---- Constructors ----*/
+    static constexpr int ADDRESS_LENGTH = 64;
     
     User();
     
@@ -37,7 +33,7 @@ public:
     // Copy constructor makes sure that User list hast no duplicates
     User(const User &user);
   
-
+    
     void AssignPrivatePublicKey();
 
     // Implement Hmac instead of randString/mainly used for testing
@@ -46,28 +42,25 @@ public:
     // Implement Hmac instead of randString
     std::vector <Uint256> CreateSignature(Sha256Hash msgHash);
     
-//    Transaction CreateTransaction(User receiver, float amount);
     Transaction CreateTransaction(const std::string receiverAddress, float amount);
     
     void SignTransaction();
 
     //Concatinate both addresses, amount as string int without dot, and rest padded with 0s to 64 string
     //ONLY USED FOR SIGNING AND VERIFICATION
-//    Sha256Hash HashTransaction(User receiver, float amount);
     static Sha256Hash HashTransaction(const std::string senderAddress, const std::string receiverAddress, float amount);
 
-    const std::string GetAddress();
-    
-    const std::string GetName();
+
     
     const bool IsNameOfUser(std::string nName);
     
-    const CurvePoint GetPublicKey();
-    
-    static std::vector<User*>& GetUsers();
     User& operator=(const User &user);
     
-    Uint256 GetPrivateKey(){return privateKey;}
+    const std::string GetAddress();
+    const std::string GetName();
+    const CurvePoint GetPublicKey();
+    const Uint256 GetPrivateKey(){return privateKey;}
+    static const std::vector<User*>& GetUsers();
     
 private:
     std::string name;
@@ -76,7 +69,6 @@ private:
     CurvePoint publicKey;
     static int currID;
     int userID;
-//    static int currID;
     static std::vector<User*> users;
 };
 

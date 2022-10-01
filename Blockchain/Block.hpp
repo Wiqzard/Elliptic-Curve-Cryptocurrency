@@ -1,6 +1,5 @@
 //
 //  Block.hpp
-//  Neww
 //
 //  Created by Sebastian Stapf on 15.09.22.
 //
@@ -8,74 +7,65 @@
 #ifndef Block_hpp
 #define Block_hpp
 
-//#include <cstdint>
-//#include <iomanip>
-//#include <iostream>
-//#include <sstream>
-//#include <algorithm>
-//#include <vector>
-//#include <array>
-//#include <time.h>
-//#include <stdio.h>
-//#include "Transaction.hpp"
-//#include "Sha256Hash.hpp"
-//#include "Sha256.hpp"
-//#include "Ecdsa.hpp"
-//#include "Utils.hpp"
 #include "User.hpp"
 
 
 class Block
 {
 public:
-
-//    std::vector<Transaction> transactions(1);
-//    Block(uint32_t nIndexIn, const std::string &sDataIn);
-    
+    static constexpr int MAX_TRANSACTIONS = 2;
     Sha256Hash prevHash;
     Sha256Hash currHash;
     User blockMaster;
-    static const int nMaxTransactions = 2;
-    
     
     Block();
+    
     Block(uint32_t nIndexIn);
+    
+    Block(uint32_t nIndexIn, time_t tTime, Sha256Hash prevHash);
+    
     Block(uint32_t nIndex, time_t tTime, Sha256Hash prevHash, Sha256Hash currHash, std::vector<Transaction> transactions): _nIndex(nIndex), _tTime(tTime), prevHash(prevHash), currHash(currHash), transactions(transactions){}
     
+    // Creates a block with _nIndex=0, _tTime= *now and fixed prevHash.
     static Block CreateGenesisBlock();
     
-    int CheckBalance();
+    const bool CheckSignature(Transaction transaction);
+    const static bool CheckSignatureStatic(Transaction transaction);
     
-    bool CheckSignature(Transaction transaction);
-    static bool CheckSignatureStatic(Transaction transaction);
-
+    // Checks transaction's signature before adding it to the block. (The balance of the sender gets checked when adding the block to the blockchain)
     void AddTransaction(Transaction transaction);
+        
     
-    void MineBlock(uint32_t nDifficulty); /* Add Miner Reward at End*/
-    
+    /* Returns the transactions in readable form:
+     * "sender1address" sends "receiver1address" "amount".
+     *                  .......                           */
     std::string TransactionsToString(bool byName);
+    
+    // Creates a hash of the block containing all of its information.
     Sha256Hash HashBlock();
+    
+    // Returns block data as byte array.
     std::vector<char> GetBlockMetaData();
     
-    uint32_t GetBlockIndex(){ return _nIndex;}
-    time_t GetBlockTime(){ return _tTime; }
-    std::vector<Transaction> GetTransactions();
-    void SetBlockTime(time_t time) { _tTime = time;}
     
-    //string of headers, transactions, delimeted with |
+    /*---- Setter/Getter methods ----*/
+    
+    const uint32_t GetBlockIndex(){ return _nIndex;}
+    const time_t GetBlockTime(){ return _tTime; }
+    const Sha256Hash GetPrevHash(){ return prevHash;}
+    const Sha256Hash GetCurrHash(){ return currHash;}
+    std::vector<Transaction> const GetTransactions () const;
+    
+    void SetBlockTime(time_t time) { _tTime = time;}
+    void SetPrevHash(Sha256Hash _prevHash){prevHash=_prevHash;}
+    void SetCurrHash(Sha256Hash _currHash){currHash=_currHash;}
+    void SetTransactions(std::vector<Transaction> _transasctions){transactions = _transasctions;}
+    
 private:
     uint32_t _nIndex;
-    uint32_t _nNonce;
     time_t _tTime;
-    std::string sHash;
-    //Sha256Hash currentHash;
-    std::string sPrevHash;
-    
     std::vector<Transaction> transactions;
-    
-//    std::array<Transaction, 2> transactions;
-    
-    std::string _CalculateHash() const;
+
 };
 
 #endif

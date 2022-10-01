@@ -1,6 +1,5 @@
 //
 //  Block.cpp
-//  Neww
 //
 //  Created by Sebastian Stapf on 15.09.22.
 //
@@ -14,20 +13,17 @@ Block::Block(){
 Block::Block(uint32_t nIndexIn) : _nIndex(nIndexIn){
     _tTime = time(nullptr);
 }
+Block::Block(uint32_t nIndexIn, time_t tTime, Sha256Hash prevHash) : _nIndex(nIndexIn), _tTime(tTime), prevHash(prevHash){}
 
 Block Block::CreateGenesisBlock(){
-    return Block(0);
+    const std::uint8_t s[12] = "1401200014";
+    Sha256Hash firstHash = Sha256::getHash(s, 12);
+    time_t tTime = time(nullptr);
+    Block genesisBlock = Block(0, tTime, firstHash);
+    return genesisBlock;
 }
 
-//bool Block::CheckSignature(Transaction transaction){
-//    Uint256 r = transaction.signature[0];
-//    Uint256 s = transaction.signature[1];
-//    CurvePoint publicKey = transaction.sender.GetPublicKey();
-//    Sha256Hash msgHash = transaction.sender.HashTransaction(transaction.receiver, transaction.amount);
-//    bool check = Ecdsa::verify(publicKey, msgHash, r,s);
-//    return check;
-//}
-bool Block::CheckSignature(Transaction transaction){
+const bool Block::CheckSignature(Transaction transaction){
     Uint256 r = transaction.signature[0];
     Uint256 s = transaction.signature[1];
     Uint256 pubk = Uint256(transaction.senderAddress);
@@ -37,7 +33,7 @@ bool Block::CheckSignature(Transaction transaction){
     return check;
 }
 
-bool Block::CheckSignatureStatic(Transaction transaction){
+const bool Block::CheckSignatureStatic(Transaction transaction){
     Uint256 r = transaction.signature[0];
     Uint256 s = transaction.signature[1];
     Uint256 pubk = Uint256(transaction.senderAddress);
@@ -53,7 +49,7 @@ void Block::AddTransaction(Transaction transaction){
     transactions.push_back(transaction);
 }
 
-std::vector<Transaction> Block::GetTransactions(){
+std::vector<Transaction> const Block::GetTransactions() const{
     return transactions;
 }
 
@@ -104,44 +100,11 @@ std::vector<char> Block::GetBlockMetaData(){
     meta_data.insert(meta_data.end(), currHashVec.begin(), currHashVec.end());
     meta_data.push_back('|');
     
-    for (int i=0; i<nMaxTransactions; i++){
+    for (int i=0; i<MAX_TRANSACTIONS; i++){
         std::vector<char> transaction_meta_data = transactions[i].GetTransactionMetadata();
         meta_data.insert(meta_data.end(), transaction_meta_data.begin(), transaction_meta_data.end());
     }
     return  meta_data;
 }
 
-//reinterpret_cast<char*>(meta_data.data())
-//Block::Block(uint32_t nIndexIn, const std::string &sDataIn) : _nIndex(nIndexIn), _sData(sDataIn)
-//{
-//    _nNonce = 0;
-//    _tTime = time(nullptr);
-//
-//    sHash = _CalculateHash();
-//}
-//
-//void Block::MineBlock(uint32_t nDifficulty)
-//{
-//    char cstr[nDifficulty + 1];
-//    for (uint32_t i = 0; i < nDifficulty; ++i)
-//    {
-//        cstr[i] = '0';
-//    }
-//    cstr[nDifficulty] = '\0';
-//
-//    std::string str(cstr);
-//
-//    do
-//    {
-//        _nNonce++;
-//        sHash = _CalculateHash();
-//    } while (sHash.substr(0, nDifficulty) != str);
-//    std::cout << "Block mined: " << sHash << std::endl;
-//}
-//
-//inline std::string Block::_CalculateHash() const
-//{
-//    std::stringstream ss;
-//    ss << _nIndex << sPrevHash << _tTime << _sData << _nNonce;
-//    return Sha256(ss.str());
-//}
+

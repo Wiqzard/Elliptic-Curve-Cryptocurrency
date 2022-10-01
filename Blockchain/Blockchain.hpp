@@ -1,6 +1,5 @@
 //
 //  Blockchain.hpp
-//  Neww
 //
 //  Created by Sebastian Stapf on 15.09.22.
 //
@@ -8,40 +7,34 @@
 #ifndef Blockchain_h
 #define Blockchain_h
 
-//#include <cstdint>
-//#include <vector>
+#include <random>
 #include "Block.hpp"
 
 
 class Blockchain
 {
 public:
-    static const int MAX_WAITING_TIME = 20;
-//    Block currBlock;
-    Blockchain();
-//    ~Blockchain();
-    //static bool CheckBlockAddable();
     
-    void AddBlock(Block newBlock);
+    Blockchain(){};
+    ~Blockchain(){};
     
-    void SimpleAddBlock(Block block);
+    // Assigns currHash of last block in chain to newBlocks prevHash and assigns newBlock currHash the hash of newBlock. Then adds to blockchain.
+    const void AddBlock(Block newBlock);
     
-    std::string TransactionsToString(bool byName, Block newBlock);
-
+    // Adds block to blockchain.
+    const void SimpleAddBlock(Block block);
+    
+    // Ignore for now.
+    bool AddTransactionB(Block &curBlock, std::string &sender, std::string &receiver, float &amount);
+    
+    const unsigned long GetChainLength();
     Block GetLastBlock();
-    Block GetFirstBlock(){return chain[0] ;}
+    const Block GetFirstBlock(){return chain[0];}
+    //Returns chain from starting in chain to end.
+    const std::vector<Block> GetSubChain(unsigned long);
+    const std::vector<Block> GetChain(){return chain; }
     
-    bool AddTransactionB(std::string sender, std::string receiver, float amount);
-    
-    bool RunBlockProtocol(User blockMaster);
-    
-    unsigned long GetChainLength();
-    
-    std::vector<Block> GetSubChain(unsigned long);
-    std::vector<Block> GetChain(){return chain; }
 private:
-//    Block block;
-    uint32_t avgWaitingTime;
     std::vector<Block> chain = {Block::CreateGenesisBlock()};
 };
 
