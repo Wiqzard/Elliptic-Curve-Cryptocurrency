@@ -145,7 +145,7 @@ bool test_node_transactions_command(){
     assert(transaction2.amount == transactions[1].amount);
     assert(transaction1.signature[0] == transactions[0].signature[0]);
     assert(transaction2.signature[1] == transactions[1].signature[1]);
-    printf("transactions_command works as expected");
+    printf("transactions_command works as expected.\n");
     return true;
 }
 
