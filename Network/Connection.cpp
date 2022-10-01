@@ -1,6 +1,5 @@
 //
 //  Connection.cpp
-//  Neww
 //
 //  Created by Sebastian Stapf on 23.09.22.
 //
@@ -9,20 +8,19 @@
 
 
 // nmyAddress and notherAddress should be char* ip addresses, '127.0.0.1'
-Connection::Connection(char* nmyAddress, char* notherAddress, Node &node, int nsocket=0, bool npacket=false) : in_node(node){
-    myAddress = nmyAddress;
-    otherAddress = notherAddress;
+Connection::Connection(char* nmyAddress, char* notherAddress, Node &node, int nsocket=0, bool npacket=false) : inNode(node){
+    _myAddress = nmyAddress;
+    _otherAddress = notherAddress;
     this->packet = npacket;
-    my_Address.sin_family = AF_INET;
-    my_Address.sin_port = htons(port);
-    my_Address.sin_addr.s_addr = INADDR_ANY;
+    myAddress.sin_family = AF_INET;
+    myAddress.sin_port = htons(port);
+    myAddress.sin_addr.s_addr = INADDR_ANY;
     nodeSocket = nsocket;
     if (nodeSocket == 0){
         nodeSocket = socket(AF_INET, SOCK_STREAM, 0);
         direction = "outgoing";
-        if ((bind(nodeSocket, (struct sockaddr *)&my_Address, sizeof(my_Address))) < 0){
+        if ((bind(nodeSocket, (struct sockaddr *)&myAddress, sizeof(myAddress))) < 0){
             perror("Failed to bind socket (connect).");
-            //delete this;
             close(nodeSocket);
             exit(1);
         }
@@ -44,13 +42,13 @@ Connection::~Connection(){
 }
 
 void Connection::nconnect(){
-    other_Address.sin_family = AF_INET;
-    other_Address.sin_port = htons(port);
-    other_Address.sin_addr.s_addr = INADDR_ANY;
-    int k = inet_pton(AF_INET, otherAddress, &other_Address.sin_addr);
+    otherAddress.sin_family = AF_INET;
+    otherAddress.sin_port = htons(port);
+    otherAddress.sin_addr.s_addr = INADDR_ANY;
+    int k = inet_pton(AF_INET, _otherAddress, &otherAddress.sin_addr);
     int j;
-    inet_pton(AF_INET, otherAddress, &j);
-    int i = connect(nodeSocket, (struct sockaddr*)&other_Address, sizeof(otherAddress));
+    inet_pton(AF_INET, _otherAddress, &j);
+    int i = connect(nodeSocket, (struct sockaddr*)&otherAddress, sizeof(otherAddress));
     printf("Connection to server successful! \n");
     std::cout << "i = connection:" << i << " inet_pton " << j << "value: " << k << std::endl;
 }
@@ -66,13 +64,13 @@ void Connection::send_packet(std::vector<char> &packet){
 }
 
 unsigned long Connection::get_our_block_height(){
-    return in_node.blockchain.GetChainLength();
+    return inNode.blockchain.GetChainLength();
 }
 
 void Connection::send_version(){
-    std::string str(myAddress);
+    std::string str(_myAddress);
     std::stringstream ss;
-    ss << "version" << '|' << version << '|' << std::time(0) << '|' << myAddress << '|' << otherAddress << '|' << get_our_block_height();
+    ss << "version" << '|' << version << '|' << std::time(0) << '|' << _myAddress << '|' << _otherAddress << '|' << get_our_block_height();
     std::string temp = ss.std::stringstream::str();
     std::vector<char> version_meta_data(temp.begin(), temp.end());
     send_packet(version_meta_data);
@@ -142,10 +140,10 @@ void Connection::cmd_version(std::vector<char> &data){
     if ((int)data_del.size() < 13){
         std::cout << "Error in received data." << std::endl;
     }
-    unsigned long behind = std::stoul(data_del[5]) - in_node.blockchain.GetChainLength();
+    unsigned long behind = std::stoul(data_del[5]) - inNode.blockchain.GetChainLength();
     if (behind < 0){
         std::stringstream ss;
-        ss << "getblocks|" << in_node.blockchain.GetChainLength();
+        ss << "getblocks|" << inNode.blockchain.GetChainLength();
         char cmd[64];
         strcpy(cmd, ss.str().c_str());
         send_packet(cmd, 64);
@@ -165,7 +163,7 @@ void Connection::cmd_gethosts(){
     for (const char &c: cmd){
         meta_data.push_back(c);
     }
-    for (const auto &host :in_node.knownHosts){
+    for (const auto &host :inNode.knownHosts){
         std::string host_address = host.first;
         int host_port = host.second;
         // port1|address1-port2|address2-port3...
@@ -223,7 +221,7 @@ void Connection::cmd_hosts(std::vector<char> &data){
         host_port = std::stoi(host_str [1]);
         host_address = host_str[2];
         host_pairs.push_back(std::pair(host_address, host_port));
-        in_node.AddHost(host_address, host_port); // Does the checking for node
+        inNode.AddHost(host_address, host_port); // Does the checking for node
     }
 }
 
@@ -245,8 +243,8 @@ std::vector<std::pair<std::string, int>> Connection::cmd_hosts_test(std::vector<
 void Connection::cmd_getblocks(std::vector<char> &data){
     std::vector<std::string> load = unpack_data(data, "|");
     unsigned long start_height = std::stoul(load[1]);
-    unsigned long behind = in_node.blockchain.GetChainLength()-start_height;
-    std::vector<Block> requested_blocks = in_node.blockchain.GetSubChain(start_height);
+    unsigned long behind = inNode.blockchain.GetChainLength()-start_height;
+    std::vector<Block> requested_blocks = inNode.blockchain.GetSubChain(start_height);
     std::vector<char> meta_data;
     std::string cmd = "blocks";
     for (const char &c: cmd){
@@ -286,9 +284,9 @@ std::vector<char> Connection::cmd_getblocks_test(Blockchain blockchain, std::vec
 void Connection::cmd_blocks(std::vector<char> &data){
     std::vector<Block> new_blocks = unpack_blocks(data);
     for (auto &block: new_blocks){
-        if (block.prevHash == in_node.blockchain.GetLastBlock().currHash){
-            if (block.GetBlockIndex() == in_node.blockchain.GetLastBlock().GetBlockIndex()+1){
-                in_node.blockchain.AddBlock(block);
+        if (block.prevHash == inNode.blockchain.GetLastBlock().currHash){
+            if (block.GetBlockIndex() == inNode.blockchain.GetLastBlock().GetBlockIndex()+1){
+                inNode.blockchain.AddBlock(block);
             } else{
                 std::cout << "Block indices missmatch." << std::endl;
             }
@@ -306,10 +304,10 @@ void Connection::cmd_gettransactions(){
         meta_data.push_back(c);
     }
     int i = 0;
-    for (auto transaction : in_node.pending_transactions){
+    for (auto transaction : inNode.pending_transactions){
         std::vector<char> transaction_meta_data = transaction.GetTransactionMetadata();
         meta_data.insert(meta_data.end(), transaction_meta_data.begin(), transaction_meta_data.end());
-        if (i != in_node.pending_transactions.size()-1){
+        if (i != inNode.pending_transactions.size()-1){
             meta_data.push_back('-');
         }
         i++;
@@ -348,7 +346,7 @@ void Connection::cmd_transactions(std::vector<char> &data){
         Uint256 r = Uint256(transaction_str[4]);
         Uint256 s = Uint256(transaction_str[5]);
         transaction.SignTransaction(r, s);
-        in_node.AddTransaction(transaction); // Does the checking for node
+        inNode.AddTransaction(transaction); // Does the checking for node
     }
 }
 std::vector<Transaction> Connection::cmd_transactions_test(std::vector<char> &data){

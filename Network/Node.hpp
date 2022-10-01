@@ -44,9 +44,8 @@ public:
     
     User node_user;
     Blockchain blockchain;
-    //Connection connection;
+
     u_long interface;
-    //std::vector<std::pair<int, std::string>> knownHosts;
     //port, ip
     std::set<std::pair<std::string, int>> knownHosts;
     
@@ -61,32 +60,38 @@ public:
     Node();
     Node(char*);
     
+    
     void connect();
     
-    Block CreateBlock();
-    
-    bool SubmitBlock(Block &block);
-    
-    // Checks if port and address valid, then adds
-    bool AddHost(std::string address, int port);
-    
-    // Check if signed, Check if balance ok (already done in block), then add to pending+new
-    bool AddTransaction(Transaction transaction);
-    
+    // Randomly assigns waiting time between 0 and MAX_WAITING_TIME. Should be managed by external alpha node.
     void AssignWaitingTime();
     
+    // Creates new block with prevHash == currHash of last block in chain, if enough transactions gathered in pending_transactions.
+    Block CreateBlock();
+    
+    // Gets assigned a waiting time. After waiting time is over checks if new blocks came in that contain transactions in block. If not adds block to blockchain.
+    bool SubmitBlock(Block &block);
+    
+    // Checks if port and address valid, then adds.
+    bool AddHost(std::string address, int port);
+    
+    // Checks signature and if balance of sender ok (already done in block), then add to pending+new.
+    bool AddTransaction(Transaction transaction);
+    
+private:
+    static constexpr int MAX_WAITING_TIME = 5;
 
-    
-    
-    Node(int domain, int service, int protocol, int port, u_long interface, void * (*server_function)(void *arg), void * (*client_function)(void *arg));
-    
-    
-    /*
-     
-     
-     
-     
-     */
     
 };
 #endif /* Node_hpp */
+/*
+ Theoretically: 1 Thread Serving, 1 Thread Connecting(Broadcasting block), 1 Thread Transactions..
+ Broadcast Transactions decoupled from block exchange
+ Store Transaction + Transaction hash in Transactions
+ ->Make block with transactions choosen
+ ->submit block
+ -> get assigned random time
+ -> wait time
+ -> check if incoming blocks contain transactions on my block
+ -> if not: block valid, get reward upload block
+ */

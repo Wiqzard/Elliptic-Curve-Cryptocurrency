@@ -1,13 +1,12 @@
 //
 //  Node.cpp
-//  Neww
 //
 //  Created by Sebastian Stapf on 19.09.22.
 //
 
 #include "Node.hpp"
 
-Node::Node(char* nmyAddress): knownHosts{std::pair(std::string(nmyAddress), port)}, node_user{"B"}{
+Node::Node(char* nmyAddress): knownHosts{std::pair(std::string(nmyAddress), port)}, node_user{"myNode"}{
     struct sockaddr_in my_Address;
     struct sockaddr_in other_Address;
     myAddress = nmyAddress;
@@ -16,18 +15,6 @@ Node::Node(char* nmyAddress): knownHosts{std::pair(std::string(nmyAddress), port
 }
 
 
-/*
- Theoretically: 1 Thread Serving, 1 Thread Connecting(Broadcasting block), 1 Thread Transactions..
- Broadcast Transactions decoupled from block exchange
- Store Transaction + Transaction hash in Transactions
- ->Make block with transactions choosen
- ->submit block
- -> get assigned random time
- -> wait time
- -> check if incoming blocks contain transactions on my block
- -> if not: block valid, get reward upload block
- 
- */
 Block Node::CreateBlock(){
     Block block = Block(blockchain.GetChainLength() + 1);
     block.prevHash = blockchain.GetLastBlock().currHash;
@@ -45,19 +32,13 @@ Block Node::CreateBlock(){
     return block;
 }
 
-
-//Waiting time should be assigned by admin node
 void Node::AssignWaitingTime(){
     std::random_device seeder;
     std::mt19937 engine(seeder());
-    std::uniform_int_distribution<int> dist(1, 10);
+    std::uniform_int_distribution<int> dist(1, Node::MAX_WAITING_TIME);
     waiting_time = dist(engine);
 }
 
-/*  Gets waiting time assigned
- *  Checks if blocks that came in while waiting time contain transactions in block
- *
- */
 bool Node::SubmitBlock(Block &block){
     AssignWaitingTime();
     std::cout << "Time to wait: " << waiting_time << std::endl;
@@ -104,13 +85,12 @@ bool Node::AddHost(std::string address, int port){
     }
 }
 
-//check sig, check amount
 bool Node::AddTransaction(Transaction transaction){
     bool sign = Block::CheckSignatureStatic(transaction);
     if (sign){
         std::string sender_address = transaction.senderAddress;
         float sender_balance = 0;
-        for (auto &block : blockchain.GetChain()){
+        for (auto const &block : blockchain.GetChain()){
             std::vector<Transaction> transactions = block.GetTransactions();
             for (auto &transaction : transactions){
                 if(transaction.receiverAddress == sender_address){
