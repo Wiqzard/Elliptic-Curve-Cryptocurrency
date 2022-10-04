@@ -1,5 +1,6 @@
 # Elliptic-Curve-Cryptocurrency
-
+[![forthebadge](https://forthebadge.com/images/badges/built-with-science.svg)](https://forthebadge.com)
+[![Gem Version](https://badge.fury.io/rb/colorls.svg)](https://badge.fury.io/rb/colorls)
 ## Description
 C++ implementation of a Cryptocurrency, utilizing elliptic curve cryptography together with blockchain technology inspired by Bitcoin. Instead of "Proof of Work" for securing the blockchain, "Proof of Elapsed Time" built in. Hence when a node wants to submit a block that it created from a pool of transactions that it gathered, it gets assigned a random waiting time, after which it can submit the block to the blockchain. \
 \
